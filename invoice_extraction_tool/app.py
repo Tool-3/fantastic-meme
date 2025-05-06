@@ -313,7 +313,7 @@ def main():
         # Clear data button
         if st.sidebar.button("Clear All Data"):
             st.session_state.extracted_data = pd.DataFrame(columns=invoice_columns)
-            st.experimental_rerun()
+            st.rerun()
 
 # Run the main function
 if __name__ == "__main__":
