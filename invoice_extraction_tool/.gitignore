@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Environments
+.env
+.venv
+
+# Generated files
+*.xlsx
+sample_invoices/*.png
+sample_invoices/*.jpg
+sample_invoices/*.pdf
+
+# OS specific files
+.DS_Store
+Thumbs.db
