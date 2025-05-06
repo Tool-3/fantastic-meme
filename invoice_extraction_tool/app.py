@@ -43,7 +43,7 @@ def configure_tesseract():
             ]
             for path in windows_paths:
                 if os.path.exists(path):
-                    pytesseract.pytesseract.tesseract_cmd = path
+                    pytesseract.pytesseract.tesseract_cmd ='usr/bin/tesseract'
                     return True
         elif system == 'Linux':
             # Check if tesseract is in PATH on Linux
@@ -58,7 +58,7 @@ def configure_tesseract():
                 ]
                 for path in linux_paths:
                     if os.path.exists(path):
-                        pytesseract.pytesseract.tesseract_cmd = path
+                        pytesseract.pytesseract.tesseract_cmd ='usr/bin/tesseract'
                         return True
         elif system == 'Darwin':  # macOS
             # Check common macOS paths
@@ -68,7 +68,7 @@ def configure_tesseract():
             ]
             for path in mac_paths:
                 if os.path.exists(path):
-                    pytesseract.pytesseract.tesseract_cmd = path
+                    pytesseract.pytesseract.tesseract_cmd ='usr/bin/tesseract'
                     return True
         
         # Could not configure tesseract automatically
