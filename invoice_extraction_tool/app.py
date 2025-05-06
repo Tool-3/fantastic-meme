@@ -19,7 +19,7 @@ import subprocess
 st.set_page_config(
     page_title="Invoice Data Extractor",
     page_icon="📊",
-    layout="wide"
+   # layout="wide"
 )
 
 # Check if tesseract is installed and configure it
