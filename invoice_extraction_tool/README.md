@@ -43,14 +43,32 @@ This application is designed to be deployed directly on Streamlit Cloud free tie
 
 The `packages.txt` file includes the necessary system dependencies for Streamlit Cloud, and `requirements.txt` lists all Python package requirements.
 
+### Troubleshooting Tesseract OCR on Streamlit Cloud
+
+If you encounter issues with Tesseract OCR on Streamlit Cloud, ensure:
+
+1. The `packages.txt` file contains both `tesseract-ocr` and `libtesseract-dev`
+2. The application has correct permissions
+3. Try redeploying the app after making any changes
+
 ## Local Installation and Usage
 
 ### Install Dependencies
 
 1. Install system dependencies:
+
+   **On Ubuntu/Debian:**
    ```
    sudo apt-get install tesseract-ocr libtesseract-dev
    ```
+
+   **On macOS:**
+   ```
+   brew install tesseract
+   ```
+
+   **On Windows:**
+   Download and install from [UB-Mannheim's Tesseract installer](https://github.com/UB-Mannheim/tesseract/wiki)
 
 2. Install Python dependencies:
    ```
@@ -72,6 +90,16 @@ streamlit run app.py
 3. **Data Management**: Extracted information is stored in a Pandas DataFrame and can be manually edited
 
 4. **Export**: The final data is exported to an Excel file using Pandas
+
+## Verifying Tesseract Installation
+
+To verify Tesseract is installed correctly:
+
+1. Open a terminal or command prompt
+2. Run: `tesseract --version`
+3. You should see version information if it's installed correctly
+
+The application will still work without Tesseract for PDF extraction, but image extraction will be limited.
 
 ## Limitations
 

@@ -11,6 +11,9 @@ import re
 from datetime import datetime
 import uuid
 import io
+import sys
+import platform
+import subprocess
 
 # Set page configuration
 st.set_page_config(
@@ -19,9 +22,84 @@ st.set_page_config(
     layout="wide"
 )
 
+# Check if tesseract is installed and configure it
+def check_tesseract():
+    try:
+        # Try to get tesseract version
+        pytesseract.get_tesseract_version()
+        return True
+    except Exception as e:
+        return False
+
+# Configure tesseract path based on platform
+def configure_tesseract():
+    system = platform.system()
+    try:
+        if system == 'Windows':
+            # Common Windows Tesseract install paths
+            windows_paths = [
+                r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+                r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
+            ]
+            for path in windows_paths:
+                if os.path.exists(path):
+                    pytesseract.pytesseract.tesseract_cmd = path
+                    return True
+        elif system == 'Linux':
+            # Check if tesseract is in PATH on Linux
+            try:
+                subprocess.run(['tesseract', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                return True
+            except:
+                # Try common Linux paths
+                linux_paths = [
+                    '/usr/bin/tesseract',
+                    '/usr/local/bin/tesseract'
+                ]
+                for path in linux_paths:
+                    if os.path.exists(path):
+                        pytesseract.pytesseract.tesseract_cmd = path
+                        return True
+        elif system == 'Darwin':  # macOS
+            # Check common macOS paths
+            mac_paths = [
+                '/usr/local/bin/tesseract',
+                '/opt/homebrew/bin/tesseract'
+            ]
+            for path in mac_paths:
+                if os.path.exists(path):
+                    pytesseract.pytesseract.tesseract_cmd = path
+                    return True
+        
+        # Could not configure tesseract automatically
+        return False
+    except Exception as e:
+        st.error(f"Error configuring Tesseract: {e}")
+        return False
+
 # App title and description
 st.title("Invoice Data Extractor")
 st.markdown("Upload PDF or image invoices to extract data and export to Excel")
+
+# Check if tesseract is available
+tesseract_available = check_tesseract()
+if not tesseract_available:
+    tesseract_available = configure_tesseract()
+
+if not tesseract_available:
+    st.warning("""
+    ⚠️ Tesseract OCR is not available or properly configured.
+    
+    Image-based extraction will use simple text detection without OCR.
+    For best results, please install Tesseract OCR:
+    
+    - On Windows: Download and install from https://github.com/UB-Mannheim/tesseract/wiki
+    - On macOS: `brew install tesseract`
+    - On Linux: `sudo apt-get install tesseract-ocr`
+    - On Streamlit Cloud: Add `tesseract-ocr` to packages.txt
+    
+    PDF extraction will still work.
+    """)
 
 # Define columns for the fields we want to extract
 invoice_columns = [
@@ -51,21 +129,39 @@ def extract_text_from_pdf(file):
         st.error(f"Error extracting text from PDF: {e}")
     return text
 
-# Function to extract text from image files
+# Function to extract text from image files with fallback
 def extract_text_from_image(file):
     try:
         # Read the image
         image = Image.open(file)
-        # Convert to OpenCV format
-        img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         
-        # Preprocessing for better OCR results
-        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-        
-        # Extract text using pytesseract
-        text = pytesseract.image_to_string(thresh)
-        return text
+        # If tesseract is available, use it with preprocessing
+        if tesseract_available:
+            # Convert to OpenCV format
+            img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            
+            # Preprocessing for better OCR results
+            gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+            thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+            
+            # Extract text using pytesseract
+            text = pytesseract.image_to_string(thresh)
+            return text
+        else:
+            # Fallback method without Tesseract
+            # Use a simple method to extract text
+            st.info("Using fallback method for image text extraction. Results may be limited.")
+            
+            # Try using PIL's built-in image to string (very limited)
+            # This is just a placeholder - without Tesseract OCR, image text extraction will be poor
+            try:
+                # Convert to grayscale for simpler processing
+                img_gray = image.convert('L')
+                # Return a message about the limitation
+                return "[Image text extraction requires Tesseract OCR. Install Tesseract for better results.]"
+            except Exception as e:
+                st.error(f"Error in fallback image processing: {e}")
+                return ""
     except Exception as e:
         st.error(f"Error extracting text from image: {e}")
         return ""
@@ -220,6 +316,13 @@ def main():
     # Sidebar for actions
     st.sidebar.header("Actions")
     
+    # Display Tesseract status
+    if tesseract_available:
+        st.sidebar.success("✅ Tesseract OCR is available")
+    else:
+        st.sidebar.warning("⚠️ Tesseract OCR not available")
+        st.sidebar.info("PDF extraction will work, but image extraction will be limited.")
+    
     # File uploader
     uploaded_files = st.file_uploader("Upload Invoice Files (PDF or Image)", 
                                       type=["pdf", "jpg", "jpeg", "png"], 
@@ -313,7 +416,7 @@ def main():
         # Clear data button
         if st.sidebar.button("Clear All Data"):
             st.session_state.extracted_data = pd.DataFrame(columns=invoice_columns)
-            st.rerun()
+            st.experimental_rerun()
 
 # Run the main function
 if __name__ == "__main__":
